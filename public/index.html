@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>ACOMPANHAMENTO PRODUÇÃO DE APANHAS POR HORA</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SOCKET.IO DO PRÓPRIO SERVIDOR -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+
+    <div class="header">
+      ACOMPANHAMENTO PRODUÇÃO DE APANHAS POR HORA
+    </div>
+
+    <div class="subheader">
+      <div class="subheader-left">
+        <span id="info-data">DATA: --/--/----</span>
+        <span id="info-filial">FILIAL: 1</span>
+      </div>
+      <div class="subheader-right">
+        <span class="status-text" id="statusText">CARREGANDO...</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <span>AUTO-ATUALIZAÇÃO (MIN):</span>
+      <input type="number" id="intervaloMin" value="30" min="1">
+      <button id="btnAplicarIntervalo">APLICAR</button>
+      <button id="btnAtualizar">ATUALIZAR AGORA</button>
+    </div>
+
+    <div class="kpi-wrapper">
+      
+      <div class="kpi-card variant-cyan">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">APANHAS MONTADAS</div>
+            <div class="kpi-value" id="kpi-montadas">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="package"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-blue">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">APANHAS RUA</div>
+            <div class="kpi-value" id="kpi-rua">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="truck"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-purple">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">SEP. EM CAIXAS</div>
+            <div class="kpi-value" id="kpi-caixas">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="box"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-pink">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">APANHAS CHECKOUT</div>
+            <div class="kpi-value" id="kpi-checkout">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="shopping-cart"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-amber">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">SEP. UNIDADES</div>
+            <div class="kpi-value" id="kpi-unidades">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="layers"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-green">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">TOTAL SEPARADO</div>
+            <div class="kpi-value" id="kpi-total-sep">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="check-circle-2"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-cyan">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">SALDO PENDENTE</div>
+            <div class="kpi-value" id="kpi-saldo">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="clock"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+
+      <div class="kpi-card variant-blue">
+        <div class="card-content">
+          <div class="card-info">
+            <div class="kpi-title">MÁX. SEPARANDO</div>
+            <div class="kpi-value" id="kpi-max-separando">0</div>
+          </div>
+          <div class="card-icon">
+            <i data-lucide="users"></i>
+          </div>
+        </div>
+        <div class="card-gradient"></div>
+      </div>
+      
+    </div>
+
+    <div class="table-wrapper">
+      <table id="tabelaApanhas">
+        <thead>
+          <tr>
+            <th class="col-ordem">ORDEM</th>
+            <th class="col-faixa">FAIXA<br>HORÁRIA</th>
+            <th class="col-num">APANHAS<br>MONTADAS</th>
+            <th class="col-num">APANHAS<br>RUA</th>
+            <th class="col-num">QT<br>SEP EM CX</th>
+            <th class="col-num">APANHAS<br>CHECKOUT</th>
+            <th class="col-num">QT SEP<br>UNIDADES</th>
+            <th class="col-num col-total-sep">TOTAL<br>SEPARADO</th>
+            <th class="col-num col-saldo">SALDO<br>PENDENTE</th>
+            <th class="col-num">QT USUÁRIOS<br>SEPARANDO</th>
+            <th class="col-num">QT USUÁRIOS<br>CONFERINDO</th>
+            <th class="col-rotas">ROTAS</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <span>ATUALIZAÇÃO AUTOMÁTICA PARA TELAS DA DISTRIBUIÇÃO</span>
+    </div>
+
+  </div>
+
+  <script>
+    // INICIALIZA OS ÍCONES LUCIDE
+    lucide.createIcons();
+
+    const API_URL = '/api/apanhas';
+    const tabelaBody = document.querySelector('#tabelaApanhas tbody');
+    const statusText = document.getElementById('statusText');
+    const infoData = document.getElementById('info-data');
+    const btnAplicarIntervalo = document.getElementById('btnAplicarIntervalo');
+    const btnAtualizar = document.getElementById('btnAtualizar');
+    const inputIntervaloMin = document.getElementById('intervaloMin');
+
+    const kpiMontadas       = document.getElementById('kpi-montadas');
+    const kpiRua            = document.getElementById('kpi-rua');
+    const kpiCaixas         = document.getElementById('kpi-caixas');
+    const kpiCheckout       = document.getElementById('kpi-checkout');
+    const kpiUnidades       = document.getElementById('kpi-unidades');
+    const kpiTotalSep       = document.getElementById('kpi-total-sep');
+    const kpiSaldo          = document.getElementById('kpi-saldo');
+    const kpiMaxSeparando   = document.getElementById('kpi-max-separando');
+
+    let autoRefreshId = null;
+
+    function formatNumber(value) {
+      if (value === null || value === undefined) return '';
+      const num = Number(value);
+      if (Number.isNaN(num)) return value;
+      return num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    }
+
+    function formatInt(value) {
+      if (value === null || value === undefined) return '';
+      const num = Number(value);
+      if (Number.isNaN(num)) return '';
+      return num.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+    }
+
+    function updateDateInfo() {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      infoData.textContent = `DATA: ${dia}/${mes}/${ano}`;
+    }
+
+    // FUNÇÃO QUE DESENHA TABELA + KPIS
+    function renderizarTabela(linhas) {
+      tabelaBody.innerHTML = '';
+
+      let sumMontadas = 0;
+      let sumRua = 0;
+      let sumCaixas = 0;
+      let sumCheckout = 0;
+      let sumUnidades = 0;
+      let sumTotalSep = 0;
+      let sumSaldo = 0;
+      let maxSeparando = 0;
+
+      (linhas || []).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.ORDEM}</td>
+          <td>${row.FAIXA_HORARIA}</td>
+          <td>${formatNumber(row.APANHAS_MONTADAS)}</td>
+          <td>${formatNumber(row.APANHAS_RUA)}</td>
+          <td>${formatNumber(row.QT_SEP_EM_CX)}</td>
+          <td>${formatNumber(row.APANHAS_CHECKOUT)}</td>
+          <td>${formatNumber(row.QT_SEP_UNIDADES)}</td>
+          <td class="col-total-sep">${formatNumber(row.TOTAL_SEPARADO)}</td>
+          <td class="col-saldo">${formatNumber(row.SALDO_PENDENTE)}</td>
+          <td>${formatNumber(row.QT_USUARIOS_SEPARANDO)}</td>
+          <td>${formatNumber(row.QT_USUARIOS_CONFERINDO)}</td>
+          <td class="col-rotas">${row.ROTAS || ''}</td>
+        `;
+        tabelaBody.appendChild(tr);
+
+        const m  = Number(row.APANHAS_MONTADAS)        || 0;
+        const r  = Number(row.APANHAS_RUA)             || 0;
+        const cx = Number(row.QT_SEP_EM_CX)            || 0;
+        const ch = Number(row.APANHAS_CHECKOUT)        || 0;
+        const un = Number(row.QT_SEP_UNIDADES)         || 0;
+        const ts = Number(row.TOTAL_SEPARADO)          || 0;
+        const sd = Number(row.SALDO_PENDENTE)          || 0;
+        const qs = Number(row.QT_USUARIOS_SEPARANDO)   || 0;
+
+        sumMontadas += m;
+        sumRua      += r;
+        sumCaixas   += cx;
+        sumCheckout += ch;
+        sumUnidades += un;
+        sumTotalSep += ts;
+        sumSaldo    += sd;
+        if (qs > maxSeparando) maxSeparando = qs;
+      });
+
+      kpiMontadas.textContent     = formatInt(sumMontadas);
+      kpiRua.textContent          = formatInt(sumRua);
+      kpiCaixas.textContent       = formatInt(sumCaixas);
+      kpiCheckout.textContent     = formatInt(sumCheckout);
+      kpiUnidades.textContent     = formatInt(sumUnidades);
+      kpiTotalSep.textContent     = formatInt(sumTotalSep);
+      kpiSaldo.textContent        = formatInt(sumSaldo);
+      kpiMaxSeparando.textContent = formatInt(maxSeparando);
+    }
+
+    // BUSCA O ESTADO ATUAL (OPCIONAL, USA CACHE IMEDIATO)
+    async function carregarDados(force = false) {
+      try {
+        statusText.textContent = 'CARREGANDO DADOS...';
+
+        const url = force ? `${API_URL}?force=1` : API_URL;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          throw new Error('ERRO HTTP ' + resp.status);
+        }
+        const json = await resp.json();
+
+        const linhas = json.data || json;
+        renderizarTabela(linhas);
+
+        if (json.lastUpdate) {
+          const dt = new Date(json.lastUpdate);
+          statusText.textContent = 'ÚLTIMA ATUALIZAÇÃO (SERVIDOR): ' + dt.toLocaleString('pt-BR');
+        } else {
+          const agora = new Date();
+          statusText.textContent = 'ÚLTIMA ATUALIZAÇÃO: ' + agora.toLocaleString('pt-BR');
+        }
+
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = 'ERRO AO CARREGAR DADOS: ' + err.message;
+      }
+    }
+
+    // BOTÃO "ATUALIZAR AGORA" → FORÇA ATUALIZAÇÃO NO SERVIDOR
+    btnAtualizar.addEventListener('click', () => carregarDados(true));
+
+    // AUTO-ATUALIZAÇÃO VIA FETCH (FALLBACK / OPCIONAL)
+    btnAplicarIntervalo.addEventListener('click', () => {
+      const minutos = parseInt(inputIntervaloMin.value, 10);
+      if (isNaN(minutos) || minutos <= 0) {
+        alert('INFORME UM INTERVALO EM MINUTOS VÁLIDO (>= 1).');
+        return;
+      }
+      if (autoRefreshId) clearInterval(autoRefreshId);
+      const intervaloMs = minutos * 60 * 1000;
+      autoRefreshId = setInterval(() => carregarDados(false), intervaloMs);
+      statusText.textContent = `AUTO-ATUALIZAÇÃO (FETCH) A CADA ${minutos} MINUTO(S).`;
+    });
+
+    // ====== SOCKET.IO: RECEBE ATUALIZAÇÕES EM TEMPO REAL ======
+    const socket = io();
+
+    socket.on('connect', () => {
+      console.log('CONECTADO VIA WEBSOCKET, ID:', socket.id);
+    });
+
+    socket.on('apanhasAtualizado', (payload) => {
+      console.log('ATUALIZAÇÃO RECEBIDA VIA WEBSOCKET:', payload);
+
+      const linhas = payload.data || [];
+      renderizarTabela(linhas);
+
+      if (payload.lastUpdate) {
+        const dt = new Date(payload.lastUpdate);
+        statusText.textContent = 'ÚLTIMA ATUALIZAÇÃO (SERVIDOR): ' + dt.toLocaleString('pt-BR');
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('DESCONECTADO DO WEBSOCKET');
+    });
+
+    // INICIALIZAÇÃO
+    updateDateInfo();
+    carregarDados(false);
+    statusText.textContent = 'AUTO-ATUALIZAÇÃO (FETCH) A CADA 30 MINUTO(S).';
+    autoRefreshId = setInterval(() => carregarDados(false), 2 * 60 * 1000);
+  </script>
+</body>
+</html>
