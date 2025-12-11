@@ -196,12 +196,35 @@
 
     let autoRefreshId = null;
 
-    function formatNumber(value) {
-      if (value === null || value === undefined) return '';
-      const num = Number(value);
-      if (Number.isNaN(num)) return value;
-      return num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-    }
+    // PERMITE CONTROLAR QUANTAS CASAS DECIMAIS QUERO EXIBIR
+  function formatNumber(value, minDecimals = 0, maxDecimals = 2) {
+    if (value === null || value === undefined) return '';
+    const num = Number(value);
+    if (Number.isNaN(num)) return value;
+    return num.toLocaleString('pt-BR', {
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: maxDecimals
+    });
+  }
+  function formatCaixas(value) {
+    if (value === null || value === undefined) return '';
+    const num = Number(value);
+    if (Number.isNaN(num)) return value;
+
+  // se for inteiro, mostra sem casas decimais
+  if (Number.isInteger(num)) {
+    return num.toLocaleString('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
+  // se tiver decimal, mostrar até 6 casas
+  return num.toLocaleString('pt-BR', {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 6
+  });
+  }
 
     function formatInt(value) {
       if (value === null || value === undefined) return '';
@@ -238,7 +261,7 @@
           <td>${row.FAIXA_HORARIA}</td>
           <td>${formatNumber(row.APANHAS_MONTADAS)}</td>
           <td>${formatNumber(row.APANHAS_RUA)}</td>
-          <td>${formatNumber(row.QT_SEP_EM_CX)}</td>
+          <td>${formatCaixas(row.QT_SEP_EM_CX)}</td>
           <td>${formatNumber(row.APANHAS_CHECKOUT)}</td>
           <td>${formatNumber(row.QT_SEP_UNIDADES)}</td>
           <td class="col-total-sep">${formatNumber(row.TOTAL_SEPARADO)}</td>
@@ -270,7 +293,7 @@
 
       kpiMontadas.textContent     = formatInt(sumMontadas);
       kpiRua.textContent          = formatInt(sumRua);
-      kpiCaixas.textContent       = formatInt(sumCaixas);
+      kpiCaixas.textContent       = formatNumber(sumCaixas, 3, 6);
       kpiCheckout.textContent     = formatInt(sumCheckout);
       kpiUnidades.textContent     = formatInt(sumUnidades);
       kpiTotalSep.textContent     = formatInt(sumTotalSep);
